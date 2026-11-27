@@ -31,7 +31,7 @@ main{max-width:1368px;margin:auto;padding:24px;display:grid;grid-template-column
 .primary svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .studio { border:1px solid var(--line); border-radius:22px; }
 #frame {border-radius:8px;outline:0;}
-#frame.outlined {outline:1px solid var(--outline);outline-offset:-1px;}
+#frame.outlined {outline:1px solid var(--line);outline-offset:-1px;}
 #stage:has(#frame:focus-visible) {outline:2px solid var(--outline);outline-offset:-2px;}
 .tools { padding:7px; gap:4px; }
 .tools button { min-height:38px; border-radius:12px; }
@@ -39,7 +39,7 @@ main{max-width:1368px;margin:auto;padding:24px;display:grid;grid-template-column
 .tools button[aria-selected=true]:after { display:none; }
 .layout { border-radius:12px; padding:9px 11px; }
 .layout:hover, .swatch:hover, #logos button:hover { border-color:var(--outline); }
-.mini { border-radius:4px; background:var(--control); }
+.mini { border-radius:4px; background:var(--control); box-shadow:inset 0 0 0 1px var(--outline); }
 
 .layout[aria-pressed=true] .mini { background:var(--raised); }
 .layout[aria-pressed=true] .mini:before,.layout[aria-pressed=true] .mini:after { background:var(--ink); }
@@ -132,7 +132,7 @@ html:has(#rotationNotice[open]) {overflow:hidden;}
 .mini:after {width:8px;}
 .tools button[aria-selected=true],.seg button[aria-pressed=true],.layout[aria-pressed=true],
 .swatch[aria-pressed=true],#slides button[aria-pressed=true] {
-  background:var(--accent);color:var(--on-accent);border-color:var(--outline);box-shadow:none;
+  background:var(--accent);color:var(--on-accent);border-color:transparent;box-shadow:none;
 }
 .seg button:not([aria-pressed=true]),.layout:not([aria-pressed=true]),.swatch:not([aria-pressed=true]) {background:var(--control);}
 .swatch {gap:2px;padding:3px;}
@@ -142,7 +142,7 @@ html:has(#rotationNotice[open]) {overflow:hidden;}
 .field {margin-bottom:6px;}
 .field input,.field textarea {padding:6px 8px;margin-top:3px;border-color:var(--outline);border-radius:var(--control-radius);}
 input[role=switch] {width:36px;height:22px;border:1px solid var(--line);box-shadow:none;}
-input[role=switch]:checked {border-color:var(--outline);}
+input[role=switch]:checked {border-color:transparent;}
 input[role=switch]:before {width:16px;height:16px;top:2px;left:2px;}
 input[role=switch]:checked:before {left:16px;background:var(--on-accent);}
 
@@ -177,6 +177,7 @@ input[role=switch]:checked:before {left:16px;background:var(--on-accent);}
 :where(html,body,body *) {touch-action:pan-x pan-y;}
 #size {position:absolute;top:10px;right:10px;pointer-events:none;user-select:none;white-space:nowrap;font-size:10px;line-height:1;font-variant-numeric:tabular-nums;color:white;mix-blend-mode:difference;opacity:.25;}
 #saveState {flex:1 1 0;text-align:right;}
+button:not(.layout) > .buttonLabel {position:relative;top:-1px;}
 </style><link rel="manifest" data-app-manifest>
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" href="./icon-192.png">
@@ -186,18 +187,18 @@ input[role=switch]:checked:before {left:16px;background:var(--on-accent);}
 <body>
 <header><div class="name" role="img" aria-label="пало·са"><svg xmlns="http://www.w3.org/2000/svg" viewBox="27 33 3756 537" width="375.6" height="53.7"><path d="M257 560L27 560L27 540L97 530L97 72L27 62L27 42L607 42L607 62L537 72L537 530L607 540L607 560L377 560L377 540L437 530L437 67L197 67L197 530L257 540L257 560ZM826 570Q762 570 721 536.5Q680 503 680 437L680 437Q680 343 759 303.5Q838 264 942 264L942 264L1009 264L1009 187Q1009 135 997.5 106.5Q986 78 962 66.5Q938 55 897 55L897 55Q850 55 827 73.5Q804 92 804 123L804 123Q804 152 832 161L832 161Q832 186 813 205Q794 224 768 224L768 224Q740 224 723 208.5Q706 193 706 161L706 161Q706 103 764 68Q822 33 909 33L909 33Q1109 33 1109 207L1109 207L1109 493Q1109 515 1118.5 526.5Q1128 538 1146 538L1146 538Q1163 538 1173 526.5Q1183 515 1183 495L1183 495L1204 495Q1204 530 1181.5 550Q1159 570 1119 570L1119 570Q1073 570 1041.5 543.5Q1010 517 1009 461L1009 461Q985 512 935.5 541Q886 570 826 570L826 570ZM881 526Q908 526 936.5 510Q965 494 985 463.5Q1005 433 1009 390L1009 390L1009 286L942 286Q860 286 819.5 322.5Q779 359 779 425L779 425Q779 480 805 503Q831 526 881 526L881 526ZM1291 570Q1256 570 1236 553Q1216 536 1216 503L1216 503Q1216 475 1233 459Q1250 443 1274 443L1274 443Q1290 443 1301 449.5Q1312 456 1317.5 463Q1323 470 1324 472L1324 472Q1311 484 1311 498L1311 498Q1311 514 1331 514L1331 514Q1399 514 1414 224L1414 224L1420 105L1329 62L1329 42L1778 42L1778 62L1708 72L1708 529L1780 539L1780 560L1546 560L1546 539L1608 529L1608 67L1446 67L1438 225Q1432 346 1415.5 421Q1399 496 1369 533Q1339 570 1291 570L1291 570ZM2109 570Q2037 570 1978 536.5Q1919 503 1884.5 441.5Q1850 380 1850 301L1850 301Q1850 222 1884.5 161Q1919 100 1978 66.5Q2037 33 2109 33L2109 33Q2181 33 2240 66.5Q2299 100 2333.5 161Q2368 222 2368 301L2368 301Q2368 380 2333.5 441.5Q2299 503 2240 536.5Q2181 570 2109 570L2109 570ZM2109 548Q2183 548 2220.5 494Q2258 440 2258 351L2258 351L2258 251Q2258 162 2220.5 108.5Q2183 55 2109 55L2109 55Q2035 55 1997.5 108.5Q1960 162 1960 251L1960 251L1960 351Q1960 440 1997.5 494Q2035 548 2109 548L2109 548ZM2983 570Q2911 570 2852 536.5Q2793 503 2758.5 441.5Q2724 380 2724 301L2724 301Q2724 218 2760.5 157Q2797 96 2856 64.5Q2915 33 2983 33L2983 33Q3040 33 3087 52.5Q3134 72 3161.5 107Q3189 142 3189 186L3189 186Q3189 219 3172 236.5Q3155 254 3127 254L3127 254Q3100 254 3082 236Q3064 218 3064 191L3064 191Q3079 181 3085 169Q3091 157 3091 139L3091 139Q3091 102 3061.5 78.5Q3032 55 2983 55L2983 55Q2911 55 2872.5 106.5Q2834 158 2834 251L2834 251L2834 351Q2834 440 2871.5 494Q2909 548 2983 548L2983 548Q3051 548 3101.5 509.5Q3152 471 3164 408L3164 408L3187 408Q3173 482 3117.5 526Q3062 570 2983 570L2983 570ZM3405 570Q3341 570 3300 536.5Q3259 503 3259 437L3259 437Q3259 343 3338 303.5Q3417 264 3521 264L3521 264L3588 264L3588 187Q3588 135 3576.5 106.5Q3565 78 3541 66.5Q3517 55 3476 55L3476 55Q3429 55 3406 73.5Q3383 92 3383 123L3383 123Q3383 152 3411 161L3411 161Q3411 186 3392 205Q3373 224 3347 224L3347 224Q3319 224 3302 208.5Q3285 193 3285 161L3285 161Q3285 103 3343 68Q3401 33 3488 33L3488 33Q3688 33 3688 207L3688 207L3688 493Q3688 515 3697.5 526.5Q3707 538 3725 538L3725 538Q3742 538 3752 526.5Q3762 515 3762 495L3762 495L3783 495Q3783 530 3760.5 550Q3738 570 3698 570L3698 570Q3652 570 3620.5 543.5Q3589 517 3588 461L3588 461Q3564 512 3514.5 541Q3465 570 3405 570L3405 570ZM3460 526Q3487 526 3515.5 510Q3544 494 3564 463.5Q3584 433 3588 390L3588 390L3588 286L3521 286Q3439 286 3398.5 322.5Q3358 359 3358 425L3358 425Q3358 480 3384 503Q3410 526 3460 526L3460 526Z" fill="#221D19"/><path transform="translate(2450 200) scale(1.9200 1.9565)" d="M52 2C80 3 98 22 97 48 96 73 76 90 49 90 22 90 3 72 3 46 4 20 24 1 52 2Z" fill="#B0673A"/></svg>
 </div><span id="saveState" role="status"></span>
-<div class="headerActions"><button id="clearEditor" disabled>Очистить</button><button id="export" class="primary" aria-label="Экспорт" title="Экспорт"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg></button></div></header>
+<div class="headerActions"><button id="clearEditor" disabled><span class="buttonLabel">Очистить</span></button><button id="export" class="primary" aria-label="Экспорт" title="Экспорт"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg></button></div></header>
 <main>
 <section class="studio" aria-label="Предпросмотр">
   <div id="stage"><div class="previewFrame"><canvas id="frame" width="1080" height="1920" role="button" tabindex="0" aria-label="Редактировать текст в кадре"></canvas><small id="size"></small></div></div>
   <div id="slideTray" inert><div class="slideClip">
-    <div class="slides" id="slideBar"><div id="slides"></div><button id="addSlide">+ Добавить слайд</button><button id="removeSlide">Удалить слайд</button></div>
+    <div class="slides" id="slideBar"><div id="slides"></div><button id="addSlide"><span class="buttonLabel">+ Добавить слайд</span></button><button id="removeSlide"><span class="buttonLabel">Удалить слайд</span></button></div>
   </div></div>
 </section>
 <section class="inspector" aria-label="Настройки слайда">
-  <nav class="tools" id="tabs" aria-label="Настройки"><button data-tab="layout">Макет</button><button data-tab="text">Текст</button><button data-tab="style">Стиль</button><button data-tab="photo">Фото</button></nav>
+  <nav class="tools" id="tabs" aria-label="Настройки"><button data-tab="layout"><span class="buttonLabel">Макет</span></button><button data-tab="text"><span class="buttonLabel">Текст</span></button><button data-tab="style"><span class="buttonLabel">Стиль</span></button><button data-tab="photo"><span class="buttonLabel">Фото</span></button></nav>
   <div id="layout" class="panel">
-    <nav class="seg" id="modes" aria-label="Формат публикации"><button data-mode="story">Сторис</button><button data-mode="post">Пост</button><button data-mode="carousel">Карусель</button></nav>
+    <nav class="seg" id="modes" aria-label="Формат публикации"><button data-mode="story"><span class="buttonLabel">Сторис</span></button><button data-mode="post"><span class="buttonLabel">Пост</span></button><button data-mode="carousel"><span class="buttonLabel">Карусель</span></button></nav>
     <h1>Композиция</h1><div id="layouts"></div>
     <label class="row">Поля<input type="checkbox" role="switch" id="guides"></label>
     <label class="row">Заголовок <select data-slide="role"><option>H1</option><option>H2</option></select></label>
@@ -218,14 +219,14 @@ input[role=switch]:checked:before {left:16px;background:var(--on-accent);}
   </div>
   <div id="photo" class="panel" hidden><div class="photoMenu"><h1>Фотография</h1>
     <div class="photoTools">
-      <button data-photo-tool="source" aria-haspopup="dialog">Выбрать фото</button>
-      <button data-photo-tool="crop" aria-haspopup="dialog">Настройки фото</button>
-      <button data-photo-tool="adjust" aria-haspopup="dialog">Эффекты</button>
+      <button data-photo-tool="source" aria-haspopup="dialog"><span class="buttonLabel">Выбрать фото</span></button>
+      <button data-photo-tool="crop" aria-haspopup="dialog"><span class="buttonLabel">Настройки фото</span></button>
+      <button data-photo-tool="adjust" aria-haspopup="dialog"><span class="buttonLabel">Эффекты</span></button>
     </div>
   </div>
 <dialog id="photoSheet" aria-labelledby="photoTitle">
   <section class="photoDrawer">
-    <form method="dialog"><h2 id="photoTitle"></h2><button autofocus>Готово</button></form>
+    <form method="dialog"><h2 id="photoTitle"></h2><button autofocus><span class="buttonLabel">Готово</span></button></form>
     <div class="photoScroll">
     <div data-photo-pane="source" hidden>
     <label class="fileButton">Открыть медиатеку<input type="file" accept="image/*" id="upload"></label>
@@ -252,14 +253,14 @@ input[role=switch]:checked:before {left:16px;background:var(--on-accent);}
 </dialog>
   </div>
 </section></main>
-<div id="warning" role="alert" hidden><span id="warningText"></span> <button id="smaller" hidden>Переключить на H2</button></div>
-<dialog id="deleteSheet" aria-labelledby="deleteTitle"><h2 id="deleteTitle"></h2><form method="dialog" class="deleteActions"><button value="cancel" autofocus>Отмена</button><button value="remove">Удалить</button></form></dialog>
+<div id="warning" role="alert" hidden><span id="warningText"></span> <button id="smaller" hidden><span class="buttonLabel">Переключить на H2</span></button></div>
+<dialog id="deleteSheet" aria-labelledby="deleteTitle"><h2 id="deleteTitle"></h2><form method="dialog" class="deleteActions"><button value="cancel" autofocus><span class="buttonLabel">Отмена</span></button><button value="remove"><span class="buttonLabel">Удалить</span></button></form></dialog>
 <dialog id="resetSheet" aria-labelledby="resetTitle" aria-describedby="resetDescription"><h2 id="resetTitle">Очистить редактор?</h2>
 <p id="resetDescription">Из редактора «СММ Пало·са» будут удалены все черновики, слайды и добавленные фото. Фотографии в медиатеке сохранятся.</p>
 <p id="resetError" role="alert" hidden>Не удалось очистить редактор. Попробуйте ещё раз.</p>
-<form method="dialog" class="deleteActions"><button value="cancel" autofocus>Отмена</button><button value="remove">Очистить</button></form></dialog>
+<form method="dialog" class="deleteActions"><button value="cancel" autofocus><span class="buttonLabel">Отмена</span></button><button value="remove"><span class="buttonLabel">Очистить</span></button></form></dialog>
 <dialog id="exportSheet"><form method="dialog"><h2>Экспорт</h2><button aria-label="Закрыть">×</button></form>
-<button id="png" class="fileButton">Сохранить кадр PNG</button><button id="zip" class="fileButton">Сохранить карусель ZIP</button><p id="exportStatus" role="status"></p></dialog>
+<button id="png" class="fileButton"><span class="buttonLabel">Сохранить кадр PNG</span></button><button id="zip" class="fileButton"><span class="buttonLabel">Сохранить карусель ZIP</span></button><p id="exportStatus" role="status"></p></dialog>
 <dialog id="rotationNotice" closedby="none" aria-labelledby="rotationTitle"><h2 id="rotationTitle"></h2></dialog>
 <script type="text/plain" id="font-licenses">Inter
 Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
@@ -1212,7 +1213,10 @@ const SMFiles = (() => {
   const modeButtons = all('[data-mode]'),tabButtons=all('[data-tab]');
   const controls=all('[data-slide],[data-project]');
   function button(label,action) {
-    const el=document.createElement('button'); el.textContent=label; el.onclick=action; return el;
+    const el=document.createElement('button');
+    const caption=document.createElement('span');
+    caption.className='buttonLabel';caption.textContent=label;
+    el.append(caption);el.onclick=action;return el;
   }
   function persist() {
     if (!ready || !storageAvailable) return;

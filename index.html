@@ -148,6 +148,13 @@ input[role=switch]:checked:before {left:17px;}
 .photoDrawer h2 {margin:0;}
 .photoScroll {padding-bottom:8px;}
 .fileButton {margin:4px 0 8px;padding:10px 16px;}
+.headerActions {display:flex;align-items:center;gap:6px;flex:none;}
+#saveState {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#export {width:var(--control-height);height:var(--control-height);padding:0;justify-content:center;}
+#clearEditor {min-height:var(--control-height);padding:0 10px;border-radius:var(--control-radius);background:var(--tile-up);font-size:14px;font-weight:600;}
+#resetSheet p {font-size:14px;line-height:1.45;}
+#resetSheet .deleteActions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+#resetSheet .deleteActions button {min-width:0;padding:0 6px;}
 </style><link rel="manifest" data-app-manifest>
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" href="./icon-192.png">
@@ -156,7 +163,8 @@ input[role=switch]:checked:before {left:17px;}
 <meta name="robots" content="noindex,nofollow"></head>
 <body>
 <header><div class="name" role="img" aria-label="пало·са"><svg xmlns="http://www.w3.org/2000/svg" viewBox="27 33 3756 537" width="375.6" height="53.7"><path d="M257 560L27 560L27 540L97 530L97 72L27 62L27 42L607 42L607 62L537 72L537 530L607 540L607 560L377 560L377 540L437 530L437 67L197 67L197 530L257 540L257 560ZM826 570Q762 570 721 536.5Q680 503 680 437L680 437Q680 343 759 303.5Q838 264 942 264L942 264L1009 264L1009 187Q1009 135 997.5 106.5Q986 78 962 66.5Q938 55 897 55L897 55Q850 55 827 73.5Q804 92 804 123L804 123Q804 152 832 161L832 161Q832 186 813 205Q794 224 768 224L768 224Q740 224 723 208.5Q706 193 706 161L706 161Q706 103 764 68Q822 33 909 33L909 33Q1109 33 1109 207L1109 207L1109 493Q1109 515 1118.5 526.5Q1128 538 1146 538L1146 538Q1163 538 1173 526.5Q1183 515 1183 495L1183 495L1204 495Q1204 530 1181.5 550Q1159 570 1119 570L1119 570Q1073 570 1041.5 543.5Q1010 517 1009 461L1009 461Q985 512 935.5 541Q886 570 826 570L826 570ZM881 526Q908 526 936.5 510Q965 494 985 463.5Q1005 433 1009 390L1009 390L1009 286L942 286Q860 286 819.5 322.5Q779 359 779 425L779 425Q779 480 805 503Q831 526 881 526L881 526ZM1291 570Q1256 570 1236 553Q1216 536 1216 503L1216 503Q1216 475 1233 459Q1250 443 1274 443L1274 443Q1290 443 1301 449.5Q1312 456 1317.5 463Q1323 470 1324 472L1324 472Q1311 484 1311 498L1311 498Q1311 514 1331 514L1331 514Q1399 514 1414 224L1414 224L1420 105L1329 62L1329 42L1778 42L1778 62L1708 72L1708 529L1780 539L1780 560L1546 560L1546 539L1608 529L1608 67L1446 67L1438 225Q1432 346 1415.5 421Q1399 496 1369 533Q1339 570 1291 570L1291 570ZM2109 570Q2037 570 1978 536.5Q1919 503 1884.5 441.5Q1850 380 1850 301L1850 301Q1850 222 1884.5 161Q1919 100 1978 66.5Q2037 33 2109 33L2109 33Q2181 33 2240 66.5Q2299 100 2333.5 161Q2368 222 2368 301L2368 301Q2368 380 2333.5 441.5Q2299 503 2240 536.5Q2181 570 2109 570L2109 570ZM2109 548Q2183 548 2220.5 494Q2258 440 2258 351L2258 351L2258 251Q2258 162 2220.5 108.5Q2183 55 2109 55L2109 55Q2035 55 1997.5 108.5Q1960 162 1960 251L1960 251L1960 351Q1960 440 1997.5 494Q2035 548 2109 548L2109 548ZM2983 570Q2911 570 2852 536.5Q2793 503 2758.5 441.5Q2724 380 2724 301L2724 301Q2724 218 2760.5 157Q2797 96 2856 64.5Q2915 33 2983 33L2983 33Q3040 33 3087 52.5Q3134 72 3161.5 107Q3189 142 3189 186L3189 186Q3189 219 3172 236.5Q3155 254 3127 254L3127 254Q3100 254 3082 236Q3064 218 3064 191L3064 191Q3079 181 3085 169Q3091 157 3091 139L3091 139Q3091 102 3061.5 78.5Q3032 55 2983 55L2983 55Q2911 55 2872.5 106.5Q2834 158 2834 251L2834 251L2834 351Q2834 440 2871.5 494Q2909 548 2983 548L2983 548Q3051 548 3101.5 509.5Q3152 471 3164 408L3164 408L3187 408Q3173 482 3117.5 526Q3062 570 2983 570L2983 570ZM3405 570Q3341 570 3300 536.5Q3259 503 3259 437L3259 437Q3259 343 3338 303.5Q3417 264 3521 264L3521 264L3588 264L3588 187Q3588 135 3576.5 106.5Q3565 78 3541 66.5Q3517 55 3476 55L3476 55Q3429 55 3406 73.5Q3383 92 3383 123L3383 123Q3383 152 3411 161L3411 161Q3411 186 3392 205Q3373 224 3347 224L3347 224Q3319 224 3302 208.5Q3285 193 3285 161L3285 161Q3285 103 3343 68Q3401 33 3488 33L3488 33Q3688 33 3688 207L3688 207L3688 493Q3688 515 3697.5 526.5Q3707 538 3725 538L3725 538Q3742 538 3752 526.5Q3762 515 3762 495L3762 495L3783 495Q3783 530 3760.5 550Q3738 570 3698 570L3698 570Q3652 570 3620.5 543.5Q3589 517 3588 461L3588 461Q3564 512 3514.5 541Q3465 570 3405 570L3405 570ZM3460 526Q3487 526 3515.5 510Q3544 494 3564 463.5Q3584 433 3588 390L3588 390L3588 286L3521 286Q3439 286 3398.5 322.5Q3358 359 3358 425L3358 425Q3358 480 3384 503Q3410 526 3460 526L3460 526Z" fill="#221D19"/><path transform="translate(2450 200) scale(1.9200 1.9565)" d="M52 2C80 3 98 22 97 48 96 73 76 90 49 90 22 90 3 72 3 46 4 20 24 1 52 2Z" fill="#B0673A"/></svg>
-</div><span id="saveState" role="status"></span><button id="export" class="primary"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg>Экспорт</button></header>
+</div><span id="saveState" role="status"></span>
+<div class="headerActions"><button id="clearEditor" disabled>Очистить</button><button id="export" class="primary" aria-label="Экспорт" title="Экспорт"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg></button></div></header>
 <main>
 <section class="studio" aria-label="Предпросмотр">
   <div id="stage"><canvas id="frame" width="1080" height="1920" role="button" tabindex="0" aria-label="Редактировать текст в кадре"></canvas></div>
@@ -222,6 +230,10 @@ input[role=switch]:checked:before {left:17px;}
 </section></main>
 <div id="warning" role="alert" hidden><span id="warningText"></span> <button id="smaller" hidden>Переключить на H2</button></div>
 <dialog id="deleteSheet" aria-labelledby="deleteTitle"><h2 id="deleteTitle"></h2><form method="dialog" class="deleteActions"><button value="cancel" autofocus>Отмена</button><button value="remove">Удалить</button></form></dialog>
+<dialog id="resetSheet" aria-labelledby="resetTitle" aria-describedby="resetDescription"><h2 id="resetTitle">Очистить редактор?</h2>
+<p id="resetDescription">Из редактора «пало·са» будут удалены все черновики, слайды и добавленные фото. Фотографии в медиатеке сохранятся.</p>
+<p id="resetError" role="alert" hidden>Не удалось очистить редактор. Попробуйте ещё раз.</p>
+<form method="dialog" class="deleteActions"><button value="cancel" autofocus>Отмена</button><button value="remove">Очистить</button></form></dialog>
 <dialog id="exportSheet"><form method="dialog"><h2>Экспорт</h2><button aria-label="Закрыть">×</button></form>
 <button id="png" class="fileButton">Сохранить кадр PNG</button><button id="zip" class="fileButton">Сохранить карусель ZIP</button><p id="exportStatus" role="status"></p></dialog>
 <dialog id="rotationNotice" closedby="none" aria-labelledby="rotationTitle"><h2 id="rotationTitle"></h2></dialog>
@@ -1057,19 +1069,41 @@ const SMFiles = (() => {
     if (window.SmmsDraft) return window.SmmsDraft.read();
     const db = await open();
     return new Promise((resolve, reject) => {
-      const req = db.transaction('draft').objectStore('draft').get('last');
-      req.onsuccess = () => resolve(req.result);
+      const drafts = db.transaction('draft').objectStore('draft');
+      const req = drafts.get('current');
+      req.onsuccess = () => {
+        if (req.result !== undefined) { resolve(req.result); return; }
+        const legacy = drafts.get('last');
+        legacy.onsuccess = () => resolve(legacy.result);
+        legacy.onerror = () => reject(legacy.error);
+      };
       req.onerror = () => reject(req.error);
     });
   }
-  async function write(value) {
+  async function write(value, {reset=false}={}) {
     if (window.SmmsDraft) return window.SmmsDraft.write(value);
     const db = await open();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('draft', 'readwrite');
-      tx.oncomplete = () => resolve();
+      let stale = false;
+      tx.oncomplete = () => resolve(!stale);
       tx.onabort = () => reject(tx.error);
-      tx.objectStore('draft').put(value, 'last');
+      const drafts = tx.objectStore('draft');
+      if (reset) {
+        drafts.put(value.resetToken, 'resetToken');
+        drafts.put(value, 'current');
+        drafts.delete('last');
+      } else {
+        // A tab opened before a reset must not resurrect its old slides on pagehide.
+        const token = drafts.get('resetToken');
+        token.onsuccess = () => {
+          stale = token.result !== value.resetToken;
+          if (!stale) {
+            drafts.put(value, value.resetToken ? 'current' : 'last');
+            if (value.resetToken) drafts.delete('last');
+          }
+        };
+      }
     });
   }
   function asDataURL(blob) {
@@ -1144,7 +1178,10 @@ const SMFiles = (() => {
   function publication(mode) {
     return {mode,theme:'smoke',font:'Inter',logo:'palosa',footerText:'',index:0,slides:[newSlide(true)]};
   }
-  let state={mode:'story',works:Object.fromEntries(Object.keys(format).map(k=>[k,publication(k)]))};
+  function initialState() {
+    return {mode:'story',works:Object.fromEntries(Object.keys(format).map(k=>[k,publication(k)]))};
+  }
+  let state=initialState();
   const project=()=>state.works[state.mode], slide=()=>project().slides[project().index];
   let tab='layout',version=0,painting=false,exporting=false,pendingWrite,editVersion=0;
   let ready=false,storageAvailable=true;
@@ -1157,7 +1194,8 @@ const SMFiles = (() => {
     if (!ready || !storageAvailable) return;
     clearTimeout(pendingWrite);
     const captured=editVersion;
-    SMFiles.write(state).then(()=>{
+    SMFiles.write(state).then(saved=>{
+      if(saved===false && ready){ready=false;location.reload();return;}
       if(captured===editVersion) $('saveState').textContent='Сохранено';
     }).catch(()=>{$('saveState').textContent='Черновик не сохранён';});
   }
@@ -1339,9 +1377,39 @@ const SMFiles = (() => {
   frame.onclick=editPreview;
   frame.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();editPreview();}};
   $('export').onclick=()=>{$('exportStatus').textContent='';$('exportSheet').showModal();};
+  const resetSheet=$('resetSheet');
+  $('clearEditor').onclick=()=>{
+    if(!ready || exporting)return;
+    $('resetError').hidden=true;resetSheet.showModal();
+  };
+  resetSheet.oncancel=e=>{if(!ready)e.preventDefault();};
+  resetSheet.querySelector('form').onsubmit=async e=>{
+    if(e.submitter?.value!=='remove')return;
+    e.preventDefault();
+    if(!ready)return;
+    ready=false;clearTimeout(pendingWrite);
+    const actions=resetSheet.querySelectorAll('button');
+    for(const b of actions)b.disabled=true;
+    try {
+      const fresh=initialState();
+      fresh.resetToken=crypto.getRandomValues(new Uint32Array(4)).join('-');
+      await SMFiles.write(fresh,{reset:true});
+      if(!window.SmmsDraft){location.reload();return;}
+      // Embedded HTML can have no reloadable URL. Start the editor in place.
+      state=fresh;tab='layout';$('guides').checked=false;photoSheet.close();
+      for(const panel of all('.panel'))panel.scrollTop=0;
+      renderSlideBar();sync();await repaint();$('saveState').textContent='Сохранено';
+      resetSheet.close();
+    } catch {
+      $('resetError').hidden=false;
+      ready=true;persist();
+    }
+    ready=true;
+    for(const b of actions)b.disabled=false;
+  };
   async function exportPublication(series) {
     if(exporting)return;
-    exporting=true;$('zip').disabled=$('png').disabled=true;
+    exporting=true;$('clearEditor').disabled=$('zip').disabled=$('png').disabled=true;
     const current=project();
     const originalSlides=current.slides.slice();
     const p={...current,slides:originalSlides.map(s=>({...s}))};
@@ -1365,7 +1433,7 @@ const SMFiles = (() => {
       await SMFiles.save(series?'Сммс — карусель.zip':'Сммс — '+entries[0].name,series?await SMFiles.zip(entries):entries[0].blob);
       $('exportStatus').textContent='Файл передан для сохранения.';
     } catch(e){$('exportStatus').textContent=e.message;showError(e.message);}
-    finally{exporting=false;$('zip').disabled=$('png').disabled=false;}
+    finally{exporting=false;$('clearEditor').disabled=$('zip').disabled=$('png').disabled=false;}
   }
   $('png').onclick=()=>exportPublication(false);$('zip').onclick=()=>exportPublication(true);
   window.addEventListener('pagehide',persist);
@@ -1382,7 +1450,7 @@ const SMFiles = (() => {
     }}
     catch{storageAvailable=false;$('saveState').textContent='Хранилище недоступно';}
     ready=true;renderSlideBar();sync();await repaint();
-    document.querySelector('main').inert=false;$('export').disabled=false;
+    document.querySelector('main').inert=false;$('clearEditor').disabled=$('export').disabled=false;
   }
   start();
 })();

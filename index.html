@@ -197,7 +197,10 @@ button:not(.layout) > .buttonLabel {position:relative;top:-1px;}
 .photoStepper {flex:0 0 52%;display:grid;grid-template-columns:34px minmax(0,1fr) 34px;align-items:center;}
 .photoStepper button,.photoActions button {background:var(--container,var(--control));border-radius:var(--control-radius);}
 .photoStepper button {height:34px;font-size:17px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y;}
-.photoStepper output {line-height:20px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.photoStepper .photoValue {display:block;width:100%;padding:0;background:none;font-size:inherit;line-height:20px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;text-decoration:underline dotted;text-underline-offset:4px;cursor:ew-resize;}
+.photoValueEdit {display:flex;align-items:center;margin-inline:3px;background:var(--container,var(--control));border:1px solid var(--line);border-radius:var(--control-radius);}
+.photoValueEdit input {min-width:0;width:100%;height:32px;padding:0 2px;border:0;border-radius:inherit;background:none;text-align:center;font-size:16px;font-variant-numeric:tabular-nums;}
+.photoValueEdit button {flex:0 0 30px;height:32px;padding:0;font-size:16px;}
 .photoActions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
 .photoActions button {min-height:var(--control-height);padding:4px;font-size:14px;}
 .photoActions button[aria-pressed=true] {background:var(--accent);color:var(--on-accent);}
@@ -3631,7 +3634,8 @@ window.SMRender = (() => {
   function posterLayout(g, height, s, p, role, family, mark) {
     const half=height/2, flipped=!!s.posterFlip, center=s.align==='center';
     const story=p.posterFormat==='story';
-    const top=flipped?half+60:story?224:80;
+    const outerInset=story?224:80;
+    const top=flipped?half+60:outerInset;
     const bottom=flipped?height-(story?256:80):half-60;
     const zones=[];
     let cursor=top;
@@ -3667,10 +3671,17 @@ window.SMRender = (() => {
       if (rowHeight) cursor+=gap+rowHeight;
     }
     const footerStart=bottom-footer.height;
-    if (footer.height) zones.push(groupAt(footer,footerStart));
-    const overflow=cursor>footerStart-(footer.height&&cursor>top?32:0) ||
-      zones.some(z=>z.boxes.some(b=>b.x<SIDE-4 || b.x+b.w>W-SIDE+4 || b.y<top-2 || b.y+b.h>bottom+2));
-    return {zones,top,bottom,overflow};
+    let photoFooter=null;
+    if (footer.height) {
+      if (cursor>footerStart-(cursor>top?32:0)) {
+        photoFooter=groupAt(footer,flipped?outerInset:height-outerInset-footer.height);
+      } else zones.push(groupAt(footer,footerStart));
+    }
+    const outside=(zone,minY,maxY)=>zone.boxes.some(b=>
+      b.x<SIDE-4 || b.x+b.w>W-SIDE+4 || b.y<minY-2 || b.y+b.h>maxY+2);
+    const overflow=cursor>bottom || zones.some(z=>outside(z,top,bottom)) ||
+      !!(photoFooter && outside(photoFooter,flipped?outerInset:half+12,flipped?half-12:height-outerInset));
+    return {zones,top,bottom,overflow,photoFooter};
   }
 
   function chooseInk(g, boxes, preference) {
@@ -3702,6 +3713,20 @@ window.SMRender = (() => {
     g.shadowBlur=16*scale;
     g.shadowOffsetY=4*scale;
   }
+  function photoFooterInk(g,zone) {
+    const ink=chooseInk(g,zone.boxes,'auto');
+    if (ink.ratio>=4.5) return ink;
+    const left=Math.min(...zone.boxes.map(b=>b.x)), right=Math.max(...zone.boxes.map(b=>b.x+b.w));
+    const top=Math.min(...zone.boxes.map(b=>b.y)), bottom=Math.max(...zone.boxes.map(b=>b.y+b.h));
+    return {...ink,backing:{x:left-12,y:top-8,w:right-left+24,h:bottom-top+16}};
+  }
+  function drawFooterBacking(g,ink) {
+    if (!ink.backing) return;
+    const {x,y,w,h}=ink.backing;
+    // Keep 4.5:1 even on pixels at the opposite extreme of the photo.
+    g.fillStyle=ink.white?'rgba(0,0,0,.56)':'rgba(255,255,255,.56)';
+    g.beginPath();g.roundRect(x,y,w,h,8);g.fill();
+  }
   async function render(canvas, project, slide) {
     const token = {}; ongoing.set(canvas, token);
     const p = {...project}, s = {...slide};
@@ -3732,6 +3757,8 @@ window.SMRender = (() => {
     const h2Fits=frame.overflow && s.role==='H1' && !measure(g,height,s,p,'H2',family,mark).overflow;
     const bgContext=poster?g:bg.getContext('2d');
     const ink=chooseInk(bgContext,frame.zones.flatMap(zone=>zone.boxes),s.ink);
+    const {photoFooter}=frame;
+    const footerInk=photoFooter?photoFooterInk(g,photoFooter):null;
     const lowContrast = ink.ratio < 4.5;
     g.save();
     if (poster) {
@@ -3747,12 +3774,40 @@ window.SMRender = (() => {
       g.restore();
     }
     g.restore();
+    if (photoFooter) {
+      g.save();
+      g.beginPath();g.rect(0,photoY,W,half);g.clip();
+      drawFooterBacking(g,footerInk);
+      if (s.softShadow) applyTextShadow(g,footerInk.white);
+      g.fillStyle=footerInk.white?'#ffffff':'#000000';
+      photoFooter.draw(g);
+      g.restore();
+    }
     const safeInset = `${100 * frame.top / height}% ${100 * SIDE / W}% ${100 * (height - frame.bottom) / height}%`;
-    const scene=poster?{width:W,height,photoY,theme,white:ink.white,zones:frame.zones,image}:null;
+    const scene=poster?{width:W,height,photoY,theme,white:ink.white,zones:frame.zones,image,photoFooter,footerInk}:null;
     return {overflow: frame.overflow, h2Fits, lowContrast, safeInset, scene};
   }
   function printPhoto(scene,p,s,width,height) {
-    return background(scene.height/2,p,s,scene.image,{width,height});
+    const canvas=background(scene.height/2,p,s,scene.image,{width,height});
+    const {photoFooter,footerInk}=scene;
+    if (photoFooter && (footerInk.backing || s.softShadow)) {
+      const g=canvas.getContext('2d');
+      const scaleX=width/scene.width, scaleY=2*height/scene.height;
+      g.save();
+      g.setTransform(scaleX,0,0,scaleY,0,-scene.photoY*scaleY);
+      drawFooterBacking(g,footerInk);
+      if (s.softShadow) drawPrintShadows(g,[photoFooter],footerInk.white,width,scaleX,scaleY,scene.photoY);
+      g.restore();
+    }
+    return canvas;
+  }
+  function drawPrintShadows(g,zones,white,width,scaleX,scaleY,top) {
+    // Move the glyphs out of the raster tile and cast their shadows back into it.
+    g.setTransform(scaleX,0,0,scaleY,-2*width,-top*scaleY);
+    applyTextShadow(g,white,scaleY);
+    g.shadowOffsetX=2*width;
+    g.fillStyle=white?'#ffffff':'#000000';
+    for (const zone of zones) zone.draw(g);
   }
   function printTextShadow(scene,width,height) {
     const canvas=surface(width,height), g=canvas.getContext('2d',{willReadFrequently:true});
@@ -3760,12 +3815,7 @@ window.SMRender = (() => {
     g.fillRect(0,0,width,height);
     const scaleX=width/scene.width, scaleY=2*height/scene.height;
     const textY=scene.photoY===0?scene.height/2:0;
-    // Move the glyphs out of the raster tile and cast their shadows back into it.
-    g.setTransform(scaleX,0,0,scaleY,-2*width,-textY*scaleY);
-    applyTextShadow(g,scene.white,scaleY);
-    g.shadowOffsetX=2*width;
-    g.fillStyle=scene.white?'#ffffff':'#000000';
-    for(const zone of scene.zones)zone.draw(g);
+    drawPrintShadows(g,scene.zones,scene.white,width,scaleX,scaleY,textY);
     return canvas;
   }
   return {render,themes,printPhoto,printTextShadow};
@@ -3987,8 +4037,8 @@ const SMPrint = (() => {
       const imageH=height/2+bleedY;
       commands.push('q',operands([width+2*bleedX,0,0,-imageH,-bleedX,y+imageH])+' cm','/'+layer.name+' Do','Q');
     }
-    const textColor=scene.white?white:black;
-    for (const zone of scene.zones) {
+    for (const zone of posterZones(scene)) {
+      const textColor=(zone===scene.photoFooter?scene.footerInk.white:scene.white)?white:black;
       if (zone.mark) {
         const {x,y,w,h}=zone.boxes[0];
         const [vx,vy,vw,vh]=zone.mark.view;
@@ -4052,10 +4102,12 @@ const SMPrint = (() => {
     return new Blob(parts,{type:'application/pdf'});
   }
 
+  const posterZones=scene=>scene.photoFooter?[...scene.zones,scene.photoFooter]:scene.zones;
+
   async function pdf(scene,p,s) {
     const {width,height,bleed,safe}=ST_A4;
     const insetX=safe*scene.width/width, insetY=safe*scene.height/height;
-    if (scene.zones.some(zone=>zone.boxes.some(b=>b.x<insetX || b.y<insetY ||
+    if (posterZones(scene).some(zone=>zone.boxes.some(b=>b.x<insetX || b.y<insetY ||
         b.x+b.w>scene.width-insetX || b.y+b.h>scene.height-insetY)))
       throw Error('Для A4 текст и логотип должны отступать от обреза минимум на 5 мм.');
     const lut=fromBase64(SMPrintData.lut);
@@ -4064,7 +4116,8 @@ const SMPrint = (() => {
     const rasterWidth=pixels(width), rasterHeight=pixels(height/2);
     const photoOnTop=scene.photoY===0;
     const layers=[];
-    if(scene.image)layers.push({name:'Photo',isTop:photoOnTop,draw:()=>SMRender.printPhoto(scene,p,s,rasterWidth,rasterHeight)});
+    if(scene.image || (scene.photoFooter && (scene.footerInk.backing || s.softShadow)))
+      layers.push({name:'Photo',isTop:photoOnTop,draw:()=>SMRender.printPhoto(scene,p,s,rasterWidth,rasterHeight)});
     if(s.softShadow && scene.zones.length)
       layers.push({name:'TextShadow',isTop:!photoOnTop,draw:()=>SMRender.printTextShadow(scene,rasterWidth,rasterHeight)});
     const resources=layers.map((layer,i)=>'/'+layer.name+' '+(6+i)+' 0 R').join(' ');
@@ -4249,12 +4302,98 @@ function bindPhotoSteppers() {
   });
   const rows=[...document.querySelectorAll('[data-photo-step]')].map(input=>{
     const row=input.parentElement, label=row.firstElementChild.textContent;
-    const controls=document.createElement('div'), value=document.createElement('output');
+    const controls=document.createElement('div'), value=document.createElement('button');
+    const middle=document.createElement('div'), edit=document.createElement('div');
+    const field=document.createElement('input');
     controls.className='photoStepper';
     controls.setAttribute('role','group');
     controls.setAttribute('aria-label',label);
-    value.setAttribute('aria-live','off');
-    const wrap=input.dataset.photoStep==='degrees';
+    const type=input.dataset.photoStep, wrap=type==='degrees';
+    const min=Number(input.min), max=Number(input.max), stepSize=Number(input.step);
+    const units=type==='scale'?100:1;
+    const suffix=wrap?'°':type==='scale'||type==='percent'?'%':'';
+    const displayed=()=>Math.round(Number(input.value)*units);
+    function setNumber(n) {
+      if(input.matches(':disabled'))return;
+      const next=wrap?photoAngle(n):Math.max(min,Math.min(max,Number(n.toFixed(5))));
+      if(next===Number(input.value))return;
+      input.value=next;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+
+    value.type='button';
+    value.className='photoValue';
+    edit.className='photoValueEdit';
+    edit.hidden=true;
+    field.type='text';
+    field.inputMode='numeric';
+    field.enterKeyHint='done';
+    field.setAttribute('aria-label',label+(suffix==='%'?', проценты':wrap?', градусы':''));
+    edit.append(field);
+    if(min<0) {
+      const sign=document.createElement('button');
+      sign.type='button';sign.textContent='±';
+      sign.setAttribute('aria-label','Поменять знак');
+      sign.onpointerdown=event=>event.preventDefault();
+      sign.onclick=()=>{
+        const current=field.value;
+        field.value=current.startsWith('-')?current.slice(1):'-'+current;
+        field.focus();
+        field.setSelectionRange(+(field.value.startsWith('-')),field.value.length);
+      };
+      edit.append(sign);
+    }
+    function endEdit(apply,focus=false) {
+      if(edit.hidden)return;
+      const text=field.value.trim().replace(/^−/,'-').replace(/[°%]$/,'');
+      edit.hidden=true;value.hidden=false;
+      if(apply && /^-?\d+$/.test(text) && Number.isSafeInteger(Number(text)))setNumber(Number(text)/units);
+      if(focus)value.focus({preventScroll:true});
+    }
+    edit.addEventListener('focusout',event=>{
+      if(!edit.contains(event.relatedTarget))endEdit(true);
+    });
+    field.onkeydown=event=>{
+      if(event.key!=='Enter' && event.key!=='Escape')return;
+      event.preventDefault();
+      event.stopPropagation();
+      endEdit(event.key==='Enter',true);
+    };
+
+    let drag, didDrag=false;
+    const dragSpeed=Math.max((max-min)/128,stepSize/4);
+    value.onpointerdown=event=>{
+      if(event.button!==0 || !event.isPrimary)return;
+      stopActivePress?.();
+      didDrag=false;
+      drag={id:event.pointerId,x:event.clientX,y:event.clientY,number:Number(input.value)};
+    };
+    value.onpointermove=event=>{
+      if(!drag || drag.id!==event.pointerId)return;
+      const dx=event.clientX-drag.x, dy=event.clientY-drag.y;
+      if(!didDrag) {
+        if(Math.abs(dy)>7 && Math.abs(dy)>=Math.abs(dx)){didDrag=true;drag=null;return;}
+        if(Math.abs(dx)<8 || Math.abs(dx)<=Math.abs(dy))return;
+        didDrag=true;
+        value.setPointerCapture(event.pointerId);
+      }
+      setNumber(drag.number+Math.round(dx*dragSpeed/stepSize)*stepSize);
+    };
+    value.onpointerup=value.onpointercancel=value.onlostpointercapture=event=>{
+      if(drag?.id===event.pointerId)drag=null;
+    };
+    value.onpointerleave=()=>{
+      if(!didDrag)drag=null;
+    };
+    value.oncontextmenu=event=>event.preventDefault();
+    value.onclick=event=>{
+      if(didDrag && event.detail)return;
+      didDrag=false;
+      field.value=displayed();
+      value.hidden=true;edit.hidden=false;
+      field.focus({preventScroll:true});
+      field.select();
+    };
     function makeButton(symbol,direction) {
       const button=document.createElement('button');
       button.type='button';
@@ -4269,9 +4408,8 @@ function bindPhotoSteppers() {
       }
       function step() {
         if(button.disabled || input.matches(':disabled') || !button.getClientRects().length){stop();return;}
-        const next=Number(input.value)+Number(input.step)*direction;
-        input.value=wrap?photoAngle(next):Math.max(Number(input.min),Math.min(Number(input.max),Number(next.toFixed(5))));
-        input.dispatchEvent(new Event('input',{bubbles:true}));
+        endEdit(true);
+        setNumber(Number(input.value)+stepSize*direction);
       }
       button.onpointerdown=event=>{
         if(!event.isPrimary || event.button!==0)return;
@@ -4293,20 +4431,20 @@ function bindPhotoSteppers() {
       return button;
     }
     const minus=makeButton('−',-1), plus=makeButton('+',1);
-    controls.append(minus,value,plus);row.append(controls);
-    return {input,value,minus,plus,wrap};
+    middle.append(value,edit);
+    controls.append(minus,middle,plus);row.append(controls);
+    return ()=>{
+      const current=Number(input.value), disabled=input.matches(':disabled');
+      value.textContent=displayed()+suffix;
+      value.setAttribute('aria-label',label+', '+value.textContent+'. Изменить значение');
+      value.disabled=disabled;
+      if(disabled)endEdit(false);
+      minus.disabled=disabled || (!wrap && current<=min);
+      plus.disabled=disabled || (!wrap && current>=max);
+    };
   });
   return ()=>{
-    for(const {input,value,minus,plus,wrap} of rows){
-      const current=Number(input.value);
-      const disabled=input.matches(':disabled');
-      const type=input.dataset.photoStep;
-      const shown=type==='scale'?Math.round(current*100):Math.round(current);
-      const suffix=wrap?'°':type==='scale'||type==='percent'?'%':'';
-      value.textContent=shown+suffix;
-      minus.disabled=disabled || (!wrap && current<=Number(input.min));
-      plus.disabled=disabled || (!wrap && current>=Number(input.max));
-    }
+    for(const sync of rows)sync();
   };
 }
 

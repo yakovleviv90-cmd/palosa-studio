@@ -66,7 +66,7 @@ dialog .deleteActions{margin:20px 0 0;justify-content:flex-end;gap:8px}
 .deleteActions button[value=remove]{background:#8b4431;color:var(--on-accent)}
 .photoTools {display:grid;}
 .photoTools button {display:flex;align-items:center;justify-content:space-between;padding:12px 4px;min-height:48px;border-top:1px solid var(--line);font-size:15px;text-align:left;}
-.photoTools button::after {content:'';width:8px;height:8px;margin-right:5px;border:solid var(--muted);border-width:1.5px 1.5px 0 0;transform:rotate(45deg);}
+.photoTools button[aria-haspopup]::after {content:'';width:8px;height:8px;margin-right:5px;border:solid var(--muted);border-width:1.5px 1.5px 0 0;transform:rotate(45deg);}
 .photoTools button:disabled {opacity:.5;}
 html {overflow:hidden;}
 body {height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
@@ -263,6 +263,7 @@ button:not(.layout) > .buttonLabel {position:relative;top:-1px;}
       <button data-photo-tool="source" aria-haspopup="dialog"><span class="buttonLabel">Выбрать фото</span></button>
       <button data-photo-tool="crop" aria-haspopup="dialog"><span class="buttonLabel">Настройки фото</span></button>
       <button data-photo-tool="adjust" aria-haspopup="dialog"><span class="buttonLabel">Эффекты</span></button>
+      <button id="resetPhoto" type="button" disabled><span class="buttonLabel">Сбросить настройки фото</span></button>
     </div>
   </div>
 <dialog id="photoSheet" aria-labelledby="photoTitle">
@@ -285,6 +286,7 @@ button:not(.layout) > .buttonLabel {position:relative;top:-1px;}
     </div>
     </fieldset>
     <div data-photo-pane="adjust" hidden>
+    <label class="row" id="textShadow">Мягкая тень<input type="checkbox" data-slide="softShadow" role="switch"></label>
     <fieldset id="effects"><legend class="sr">Эффекты фотографии</legend>
     <div class="slider"><span>Размытие</span><input type="number" hidden min="0" max="20" step="1" data-default="0" data-slide="blur" data-photo-step="value"></div>
     <div class="slider"><span>Контраст</span><input type="number" hidden min="50" max="150" step="1" data-default="100" data-slide="contrast" data-photo-step="percent"></div>
@@ -296,7 +298,6 @@ button:not(.layout) > .buttonLabel {position:relative;top:-1px;}
     <label class="row">Затемнить фото<input id="dimPhoto" type="checkbox" role="switch"></label>
     <div class="slider" id="dimLevel"><span>Сила</span><input type="number" hidden min="0" max="100" step="1" data-default="0" data-slide="darken" data-photo-step="percent"></div>
     </fieldset>
-    <label class="row" id="textShadow">Мягкая тень<input type="checkbox" data-slide="softShadow" role="switch"></label>
     <p id="contrastHelp" hidden>Под текстом или логотипом есть участки с контрастом ниже 4,5:1. Попробуйте изменить кадрирование или затемнить фото и выбрать светлый текст.</p>
     </div>
     </div>
@@ -3696,6 +3697,11 @@ window.SMRender = (() => {
     }
     return {white, ratio: white ? light : dark};
   }
+  function applyTextShadow(g,white,scale=1) {
+    g.shadowColor=white?'rgba(0,0,0,.32)':'rgba(0,0,0,.12)';
+    g.shadowBlur=16*scale;
+    g.shadowOffsetY=4*scale;
+  }
   async function render(canvas, project, slide) {
     const token = {}; ongoing.set(canvas, token);
     const p = {...project}, s = {...slide};
@@ -3735,11 +3741,7 @@ window.SMRender = (() => {
     }
     for (const zone of frame.zones) {
       g.save();
-      if (s.softShadow === true && !poster) {
-        g.shadowColor = ink.white ? 'rgba(0,0,0,.32)' : 'rgba(0,0,0,.12)';
-        g.shadowBlur = 16;
-        g.shadowOffsetY = 4;
-      }
+      if (s.softShadow === true) applyTextShadow(g,ink.white);
       g.fillStyle = ink.white ? '#ffffff' : '#000000';
       zone.draw(g);
       g.restore();
@@ -3752,7 +3754,21 @@ window.SMRender = (() => {
   function printPhoto(scene,p,s,width,height) {
     return background(scene.height/2,p,s,scene.image,{width,height});
   }
-  return {render,themes,printPhoto};
+  function printTextShadow(scene,width,height) {
+    const canvas=surface(width,height), g=canvas.getContext('2d',{willReadFrequently:true});
+    g.fillStyle=scene.theme;
+    g.fillRect(0,0,width,height);
+    const scaleX=width/scene.width, scaleY=2*height/scene.height;
+    const textY=scene.photoY===0?scene.height/2:0;
+    // Move the glyphs out of the raster tile and cast their shadows back into it.
+    g.setTransform(scaleX,0,0,scaleY,-2*width,-textY*scaleY);
+    applyTextShadow(g,scene.white,scaleY);
+    g.shadowOffsetX=2*width;
+    g.fillStyle=scene.white?'#ffffff':'#000000';
+    for(const zone of scene.zones)zone.draw(g);
+    return canvas;
+  }
+  return {render,themes,printPhoto,printTextShadow};
 })();
 
 /* Offline draft storage and export. ZIP uses the uncompressed PKZIP format. */
@@ -3921,10 +3937,9 @@ const SMPrint = (() => {
     return result;
   }
 
-  async function photoBytes(scene,p,s,lut) {
-    const width=pixels(ST_A4.width), height=pixels(ST_A4.height/2), bleed=pixels(ST_A4.bleed);
-    const image=SMRender.printPhoto(scene,p,s,width,height);
-    const top=scene.photoY===0?bleed:0;
+  function rasterBytes(image,isTop,lut) {
+    const {width,height}=image, bleed=pixels(ST_A4.bleed);
+    const top=isTop?bleed:0;
     const canvas=document.createElement('canvas');
     canvas.width=width+2*bleed;canvas.height=height+bleed;
     const g=canvas.getContext('2d',{willReadFrequently:true});
@@ -3941,7 +3956,7 @@ const SMPrint = (() => {
     return result;
   }
 
-  async function content(scene,lut) {
+  async function content(scene,lut,layers) {
     const hb=await SMPrintEngine();
     const fonts=new Map(), outlines=new Map();
     const fontRules=[...document.styleSheets[0].cssRules].filter(rule=>rule.type===CSSRule.FONT_FACE_RULE);
@@ -3967,10 +3982,10 @@ const SMPrint = (() => {
     const commands=['q',operands([mm(paperW)/width,0,0,-mm(paperH)/height,mm(bleed),mm(paperH+bleed)])+' cm'];
     const bleedX=width*bleed/paperW, bleedY=height*bleed/paperH;
     commands.push(color(scene.theme),operands([-bleedX,-bleedY,width+2*bleedX,height+2*bleedY])+' re f');
-    if (scene.image) {
-      const y=scene.photoY || -bleedY;
+    for (const layer of layers) {
+      const y=layer.isTop?-bleedY:height/2;
       const imageH=height/2+bleedY;
-      commands.push('q',operands([width+2*bleedX,0,0,-imageH,-bleedX,y+imageH])+' cm','/Photo Do','Q');
+      commands.push('q',operands([width+2*bleedX,0,0,-imageH,-bleedX,y+imageH])+' cm','/'+layer.name+' Do','Q');
     }
     const textColor=scene.white?white:black;
     for (const zone of scene.zones) {
@@ -4046,18 +4061,25 @@ const SMPrint = (() => {
     const lut=fromBase64(SMPrintData.lut);
     const media='[0 0 '+operands([mm(width+2*bleed),mm(height+2*bleed)])+']';
     const trim='['+operands([mm(bleed),mm(bleed),mm(width+bleed),mm(height+bleed)])+']';
+    const rasterWidth=pixels(width), rasterHeight=pixels(height/2);
+    const photoOnTop=scene.photoY===0;
+    const layers=[];
+    if(scene.image)layers.push({name:'Photo',isTop:photoOnTop,draw:()=>SMRender.printPhoto(scene,p,s,rasterWidth,rasterHeight)});
+    if(s.softShadow && scene.zones.length)
+      layers.push({name:'TextShadow',isTop:!photoOnTop,draw:()=>SMRender.printTextShadow(scene,rasterWidth,rasterHeight)});
+    const resources=layers.map((layer,i)=>'/'+layer.name+' '+(6+i)+' 0 R').join(' ');
     const page='<< /Type /Page /Parent 2 0 R /MediaBox '+media+' /BleedBox '+media+' /TrimBox '+trim+
-      ' /Resources << /ColorSpace << /DefaultCMYK [/ICCBased 5 0 R] >>'+(scene.image?' /XObject << /Photo 6 0 R >>':'')+' >> /Contents 4 0 R >>';
+      ' /Resources << /ColorSpace << /DefaultCMYK [/ICCBased 5 0 R] >>'+(resources?' /XObject << '+resources+' >>':'')+' >> /Contents 4 0 R >>';
     const objects=[
       '<< /Type /Catalog /Pages 2 0 R /OutputIntents [<< /Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier (FOGRA39) /DestOutputProfile 5 0 R >>] >>',
       '<< /Type /Pages /Count 1 /Kids [3 0 R] >>',page,
-      await stream('',await content(scene,lut)),
+      await stream('',await content(scene,lut,layers)),
       await stream('/N 4 /Alternate /DeviceCMYK',fromBase64(SMPrintData.profile))
     ];
-    if(scene.image) {
-      const photo=await photoBytes(scene,p,s,lut);
+    for(const layer of layers) {
+      const image=rasterBytes(layer.draw(),layer.isTop,lut);
       objects.push(await stream('/Type /XObject /Subtype /Image /ColorSpace [/ICCBased 5 0 R] /BitsPerComponent 8'+
-        ' /Width '+photo.width+' /Height '+photo.height,photo.data));
+        ' /Width '+image.width+' /Height '+image.height,image.data));
     }
     return documentBlob(objects);
   }
@@ -4244,7 +4266,7 @@ function bindPhotoSteppers() {
         if(event.button!==0) return;
         held=false;stop();
         button.setPointerCapture(event.pointerId);
-        delay=setTimeout(()=>{held=true;repeat=setInterval(step,75);step();},380);
+        delay=setTimeout(()=>{held=true;repeat=setInterval(step,55);step();},300);
       };
       button.onpointerup=button.onpointercancel=button.onlostpointercapture=stop;
       button.onclick=event=>{
@@ -4269,6 +4291,14 @@ function bindPhotoSteppers() {
       plus.disabled=disabled || (!wrap && current>=Number(input.max));
     }
   };
+}
+
+function resetPhotoSettings(slide) {
+  for(const input of document.querySelectorAll('[data-photo-step]'))
+    slide[input.dataset.slide]=Number(input.dataset.default);
+  slide.flipPhoto=false;
+  slide.dimOn=false;
+  delete slide.lastDarken;
 }
 
 (() => {
@@ -4401,7 +4431,6 @@ function bindPhotoSteppers() {
     }
     $('posterFormats').hidden=$('posterFlipRow').hidden=$('posterDetails').hidden=!isPoster();
     $('posterDetailsFields').hidden=!s.detailsOn;
-    $('textShadow').hidden=isPoster();
     for(const b of $('posterFormats').children)b.setAttribute('aria-pressed',b.dataset.posterFormat===p.posterFormat);
     for(const b of $('themes').children)b.setAttribute('aria-pressed',b.dataset.theme===p.theme);
     $('size').textContent=isPrint()?'210 × 297 мм':dimensions().join(' × ');
@@ -4415,6 +4444,7 @@ function bindPhotoSteppers() {
     $('crop').disabled=$('effects').disabled=!s.photo||!s.photoOn;
     document.querySelector('[data-photo-tool=crop]').disabled=$('crop').disabled;
     document.querySelector('[data-slide=photoOn]').disabled=!s.photo;
+    $('resetPhoto').disabled=!s.photo;
     const dimOn=s.dimOn ?? (s.darken>0);
     $('dimPhoto').checked=dimOn;
     const strength=$('dimLevel').querySelector('input');
@@ -4492,6 +4522,13 @@ function bindPhotoSteppers() {
     s.dimOn=$('dimPhoto').checked;
     if(s.dimOn)s.darken=s.lastDarken??(s.darken||28);
     else s.lastDarken=s.darken;
+    changed();
+  };
+  $('resetPhoto').onclick=()=>{
+    const s=slide();
+    if(!s.photo)return;
+    resetPhotoSettings(s);
+    if(isPoster())project().posterCrops={};
     changed();
   };
   $('rotatePhoto').onclick=()=>{const s=slide();s.rotation=photoAngle((s.rotation||0)+90);changed();};

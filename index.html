@@ -196,7 +196,7 @@ button:not(.layout) > .buttonLabel {position:relative;top:-1px;}
 
 .photoStepper {flex:0 0 52%;display:grid;grid-template-columns:34px minmax(0,1fr) 34px;align-items:center;}
 .photoStepper button,.photoActions button {background:var(--container,var(--control));border-radius:var(--control-radius);}
-.photoStepper button {height:34px;font-size:17px;}
+.photoStepper button {height:34px;font-size:17px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y;}
 .photoStepper output {line-height:20px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .photoActions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
 .photoActions button {min-height:var(--control-height);padding:4px;font-size:14px;}
@@ -4241,6 +4241,12 @@ function bindPhotoGestures(target, getSlide, changed, isEnabled=()=>true) {
 }
 
 function bindPhotoSteppers() {
+  let stopActivePress;
+  window.addEventListener('blur',()=>stopActivePress?.());
+  window.addEventListener('pagehide',()=>stopActivePress?.());
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)stopActivePress?.();
+  });
   const rows=[...document.querySelectorAll('[data-photo-step]')].map(input=>{
     const row=input.parentElement, label=row.firstElementChild.textContent;
     const controls=document.createElement('div'), value=document.createElement('output');
@@ -4254,21 +4260,32 @@ function bindPhotoSteppers() {
       button.type='button';
       button.textContent=symbol;
       button.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+label);
-      let delay,repeat,held=false;
-      function stop() {clearTimeout(delay);clearInterval(repeat);}
+      let delay,repeat,pointerId,held=false;
+      function stop() {
+        clearTimeout(delay);
+        clearInterval(repeat);
+        pointerId=undefined;
+        if(stopActivePress===stop)stopActivePress=undefined;
+      }
       function step() {
-        if(button.disabled || input.matches(':disabled')){stop();return;}
+        if(button.disabled || input.matches(':disabled') || !button.getClientRects().length){stop();return;}
         const next=Number(input.value)+Number(input.step)*direction;
         input.value=wrap?photoAngle(next):Math.max(Number(input.min),Math.min(Number(input.max),Number(next.toFixed(5))));
         input.dispatchEvent(new Event('input',{bubbles:true}));
       }
       button.onpointerdown=event=>{
-        if(event.button!==0) return;
-        held=false;stop();
-        button.setPointerCapture(event.pointerId);
+        if(!event.isPrimary || event.button!==0)return;
+        stopActivePress?.();
+        held=false;
+        pointerId=event.pointerId;
+        button.setPointerCapture(pointerId);
+        stopActivePress=stop;
         delay=setTimeout(()=>{held=true;repeat=setInterval(step,55);step();},300);
       };
-      button.onpointerup=button.onpointercancel=button.onlostpointercapture=stop;
+      button.onpointerup=button.onpointercancel=button.onlostpointercapture=event=>{
+        if(event.pointerId===pointerId)stop();
+      };
+      button.oncontextmenu=event=>event.preventDefault();
       button.onclick=event=>{
         if(!held || !event.detail)step();
         held=false;

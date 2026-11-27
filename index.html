@@ -30,7 +30,7 @@ main{max-width:1368px;margin:auto;padding:24px;display:grid;grid-template-column
 .primary { display:inline-flex; align-items:center; gap:8px; border-radius:24px; }
 .primary svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .studio { border:1px solid var(--tile-up); border-radius:22px; }
-#frame {outline:1px solid rgba(244,238,228,.38);outline-offset:-1px;}
+#frame {border-radius:8px;outline:1px solid rgba(244,238,228,.38);outline-offset:-1px;}
 #frame:focus-visible {outline:2px solid var(--warm);outline-offset:-2px;}
 .tools { padding:7px; gap:4px; }
 .tools button { min-height:38px; border-radius:12px; }
@@ -111,6 +111,43 @@ main {width:100%;flex:1;min-height:0;margin:0 auto;grid-template-rows:minmax(0,1
 #rotationNotice[open] {display:grid;place-items:center;}
 #rotationNotice::backdrop {background:var(--surface);}
 html:has(#rotationNotice[open]) {overflow:hidden;}
+
+/* Compact controls use the studio palette independently of the artwork. */
+:root {--control-radius:8px;--control-height:44px;}
+.inspector .panel:not(#photo),.photoMenu {padding:12px;}
+.inspector h1,.photoDrawer h2 {font-size:18px;line-height:1.2;letter-spacing:-.025em;margin:0 0 8px;}
+.tools {padding:2px 8px;gap:2px;}
+.tools button,.seg button,.layout,.swatch {min-height:var(--control-height);border-radius:var(--control-radius);}
+.tools button,.seg button {font-size:14px;}
+.seg {padding:2px;gap:2px;margin-bottom:10px;}
+#layouts,#themes {gap:4px;margin:0 0 8px;}
+.layout {padding:4px 8px;gap:6px;}
+.mini {width:21px;height:30px;}
+.mini:before {width:13px;}
+.mini:after {width:8px;}
+.tools button[aria-selected=true],.seg button[aria-pressed=true],.layout[aria-pressed=true],
+.swatch[aria-pressed=true],#slides button[aria-pressed=true] {
+  background:var(--tile-up);color:var(--ink);border-color:transparent;box-shadow:inset 0 0 0 1px var(--warm);
+}
+.swatch {gap:2px;padding:3px;}
+.swatch i {height:24px;font-size:16px;}
+.row,.slider,.photoTools button {min-height:var(--control-height);padding:4px 0;gap:8px;font-size:14px;}
+.row select {border-radius:var(--control-radius);padding:4px;min-height:32px;}
+.field {margin-bottom:6px;}
+.field input,.field textarea {padding:6px 8px;margin-top:3px;border-color:var(--quiet);border-radius:var(--control-radius);}
+input[role=switch] {width:36px;height:22px;}
+input[role=switch]:before {width:16px;height:16px;}
+input[role=switch]:checked:before {left:17px;}
+.guide {position:relative;gap:6px;}
+.guide:before {content:'';position:absolute;inset:-6px 0;}
+.primary,.fileButton,#slides button,#addSlide,#removeSlide,.deleteActions button {border-radius:var(--control-radius);min-height:var(--control-height);}
+#slides button {min-width:var(--control-height);}
+.slides {gap:4px;padding:4px 0;}
+.photoDrawer {padding:0 12px;}
+.photoDrawer form {min-height:var(--control-height);}
+.photoDrawer h2 {margin:0;}
+.photoScroll {padding-bottom:8px;}
+.fileButton {margin:4px 0 8px;padding:10px 16px;}
 </style><link rel="manifest" data-app-manifest>
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" href="./icon-192.png">
@@ -123,7 +160,7 @@ html:has(#rotationNotice[open]) {overflow:hidden;}
 <main>
 <section class="studio" aria-label="Предпросмотр">
   <div id="stage"><canvas id="frame" width="1080" height="1920" role="button" tabindex="0" aria-label="Редактировать текст в кадре"></canvas></div>
-  <div class="caption"><span id="size"></span><span id="offlineStatus" role="status">Готовим офлайн-копию…</span><label class="guide"><input type="checkbox" id="guides">Поля</label></div>
+  <div class="caption"><span id="size"></span><span id="offlineStatus" role="status">Готовим офлайн-копию…</span><label class="guide">Поля<input type="checkbox" role="switch" id="guides"></label></div>
   <div class="slides" id="slideBar" hidden><div id="slides"></div><button id="addSlide">+ Добавить слайд</button><button id="removeSlide">Удалить слайд</button></div>
 </section>
 <section class="inspector" aria-label="Настройки слайда">
